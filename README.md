@@ -16,6 +16,7 @@ The container expects the following environment variables to be passed in:
 * `CONSUL_HOST` - (optional) defaults to localhost
 * `CONSUL_PORT` - (optional) defaults to 8500
 * `CONSUL_PREFIX` - (optional) defaults to "exhibitor/"
+* `BACKUP_TYPE` - (optional) the backup type, if "s3", must include all AWS and S3 variables listed below, defaults to "file"
 * `S3_BUCKET` - (optional) bucket used by Exhibitor for backups and coordination
 * `S3_PREFIX` - (optional) key prefix within `S3_BUCKET` to use for this cluster
 * `AWS_ACCESS_KEY_ID` - (optional) AWS access key ID with read/write permissions on `S3_BUCKET`
