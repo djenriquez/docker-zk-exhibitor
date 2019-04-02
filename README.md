@@ -12,6 +12,10 @@ Available on the Docker Index as [djenriquez/zookeeper-exhibitor](https://index.
 The container expects the following environment variables to be passed in:
 
 * `HOSTNAME` - addressable hostname for this node (Exhibitor will forward users of the UI to this address)
+* `CONFIG_TYPE` - (optional) the type of instance management to use, accepts "s3", "consul", "file", defaults to file
+* `CONSUL_HOST` - (optional) defaults to localhost
+* `CONSUL_PORT` - (optional) defaults to 8500
+* `CONSUL_PREFIX` - (optional) defaults to "exhibitor/"
 * `S3_BUCKET` - (optional) bucket used by Exhibitor for backups and coordination
 * `S3_PREFIX` - (optional) key prefix within `S3_BUCKET` to use for this cluster
 * `AWS_ACCESS_KEY_ID` - (optional) AWS access key ID with read/write permissions on `S3_BUCKET`
@@ -25,6 +29,7 @@ The container expects the following environment variables to be passed in:
 * `HTTP_PROXY_USERNAME` - (optional) HTTP Proxy username
 * `HTTP_PROXY_PASSWORD` - (optional) HTTP Proxy password
 * `EXHIBITOR_PORT` - (optional) HTTP Port for Exhibitor (default is 8181)
+
 
 Starting the container:
 
