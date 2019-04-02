@@ -13,11 +13,11 @@ DEFAULT_BACKUP_TYPE="file"
 S3_SECURITY=""
 HTTP_PROXY=""
 CONFIG=""
-CONFIG_TYPE=""
 DEFAULT_CONSUL_HOST="localhost"
 DEFAULT_CONSUL_PORT="8500"
 DEFAULT_CONSUL_PREFIX="exhibitor/"
 : ${HOSTNAME:?$MISSING_VAR_MESSAGE}
+: ${CONFIG_TYPE:?$MISSING_VAR_MESSAGE}
 : ${AWS_REGION:=$DEFAULT_AWS_REGION}
 : ${ZK_DATA_DIR:=$DEFAULT_DATA_DIR}
 : ${ZK_LOG_DIR:=$DEFAULT_LOG_DIR}
@@ -66,14 +66,16 @@ if [[ "${BACKUP_TYPE}" == "s3" ]]; then
   echo "backup-extra=throttle\=&bucket-name\=${S3_BUCKET}&key-prefix\=${S3_PREFIX}&max-retries\=4&retry-sleep-ms\=30000" >> /opt/exhibitor/defaults.conf
 
   BACKUP_CONFIG="--s3backup true"
+else
+	BACKUP_CONFIG="--filesystembackup true"
 fi
 
 if [[ "${CONFIG_TYPE}" == "consul" ]]; then
-  CONFIG="--consulhost ${CONSUL_HOST} --consulport ${CONSUL_PORT} --consulprefix ${CONSUL_PREFIX}"
+  CONFIG="--configtype consul --consulhost ${CONSUL_HOST} --consulport ${CONSUL_PORT} --consulprefix ${CONSUL_PREFIX}"
 elif [[ "${CONFIG_TYPE}" == "s3" ]]; then
   CONFIG="--configtype s3 --s3config ${S3_BUCKET}:${S3_PREFIX} ${S3_SECURITY} --s3region ${AWS_REGION}"
 else
-  CONFIG="--configtype file --fsconfigdir /opt/zookeeper/local_configs --filesystembackup true"
+  CONFIG="--configtype file --fsconfigdir /opt/zookeeper/local_configs"
 fi
 
 if [[ -n ${ZK_PASSWORD} ]]; then
