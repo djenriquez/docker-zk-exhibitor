@@ -9,9 +9,15 @@ DEFAULT_DATA_DIR="/opt/zookeeper/snapshots"
 DEFAULT_LOG_DIR="/opt/zookeeper/transactions"
 DEFAULT_ZK_ENSEMBLE_SIZE=0
 DEFAULT_OBSERVER_THRESHOLD=4
+DEFAULT_BACKUP_TYPE="file"
 S3_SECURITY=""
 HTTP_PROXY=""
+CONFIG=""
+DEFAULT_CONSUL_HOST="localhost"
+DEFAULT_CONSUL_PORT="8500"
+DEFAULT_CONSUL_PREFIX="exhibitor/"
 : ${HOSTNAME:?$MISSING_VAR_MESSAGE}
+: ${CONFIG_TYPE:?$MISSING_VAR_MESSAGE}
 : ${AWS_REGION:=$DEFAULT_AWS_REGION}
 : ${ZK_DATA_DIR:=$DEFAULT_DATA_DIR}
 : ${ZK_LOG_DIR:=$DEFAULT_LOG_DIR}
@@ -22,6 +28,10 @@ HTTP_PROXY=""
 : ${HTTP_PROXY_PASSWORD:=""}
 : ${OBSERVER_THRESHOLD:=$DEFAULT_OBSERVER_THRESHOLD}
 : ${EXHIBITOR_PORT:=8181}
+: ${BACKUP_TYPE:=$DEFAULT_BACKUP_TYPE}
+: ${CONSUL_PREFIX:=$DEFAULT_CONSUL_PREFIX}
+: ${CONSUL_HOST:=$DEFAULT_CONSUL_HOST}
+: ${CONSUL_PORT:=$DEFAULT_CONSUL_PORT}
 
 cat <<- EOF > /opt/exhibitor/defaults.conf
 	zookeeper-data-directory=$ZK_DATA_DIR
@@ -52,12 +62,20 @@ EOF
   S3_SECURITY="--s3credentials /opt/exhibitor/credentials.properties"
 fi
 
-if [[ -n ${S3_BUCKET} ]]; then
+if [[ "${BACKUP_TYPE}" == "s3" ]]; then
   echo "backup-extra=throttle\=&bucket-name\=${S3_BUCKET}&key-prefix\=${S3_PREFIX}&max-retries\=4&retry-sleep-ms\=30000" >> /opt/exhibitor/defaults.conf
 
-  BACKUP_CONFIG="--configtype s3 --s3config ${S3_BUCKET}:${S3_PREFIX} ${S3_SECURITY} --s3region ${AWS_REGION} --s3backup true"
+  BACKUP_CONFIG="--s3backup true"
 else
-  BACKUP_CONFIG="--configtype file --fsconfigdir /opt/zookeeper/local_configs --filesystembackup true"
+	BACKUP_CONFIG="--filesystembackup true"
+fi
+
+if [[ "${CONFIG_TYPE}" == "consul" ]]; then
+  CONFIG="--configtype consul --consulhost ${CONSUL_HOST} --consulport ${CONSUL_PORT} --consulprefix ${CONSUL_PREFIX}"
+elif [[ "${CONFIG_TYPE}" == "s3" ]]; then
+  CONFIG="--configtype s3 --s3config ${S3_BUCKET}:${S3_PREFIX} ${S3_SECURITY} --s3region ${AWS_REGION}"
+else
+  CONFIG="--configtype file --fsconfigdir /opt/zookeeper/local_configs"
 fi
 
 if [[ -n ${ZK_PASSWORD} ]]; then
@@ -93,6 +111,7 @@ exec 2>&1
 
 java -jar /opt/exhibitor/exhibitor.jar \
   --port ${EXHIBITOR_PORT} --defaultconfig /opt/exhibitor/defaults.conf \
+	${CONFIG} \
   ${BACKUP_CONFIG} \
   ${HTTP_PROXY} \
   --hostname ${HOSTNAME} \
